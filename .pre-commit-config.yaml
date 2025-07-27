@@ -42,12 +42,20 @@ repos:
         stages: [commit-msg]
 
   - repo: https://github.com/bridgecrewio/checkov.git
-    rev: 3.2.454
+    rev: 3.2.456
     hooks:
       - id: checkov
         name: checkov (cloudformation)
         files: \.yaml$|\.yml$
-        args: [--framework, cloudformation]
+        args:
+          [
+            -d,
+            agentcore_cli/services/templates,
+            --framework,
+            cloudformation,
+            "--quiet",
+            "--compact",
+          ]
 
   - repo: https://github.com/astral-sh/uv-pre-commit
     # uv version.
@@ -72,7 +80,7 @@ repos:
         always_run: true
       - id: test
         name: test
-        entry: poe test
+        entry: poe cov
         language: system
         pass_filenames: false
         always_run: true

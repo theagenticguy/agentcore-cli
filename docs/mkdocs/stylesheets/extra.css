@@ -470,10 +470,6 @@
 	border-radius: 4px;
 }
 
-.md-typeset .tabbed-labels::before {
-	display: none;
-}
-
 /* Footer improvements */
 .md-footer {
 	background-color: var(--md-footer-bg-color);

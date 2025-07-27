@@ -216,7 +216,7 @@ class TestCognitoService:
             success, message = service.create_user(
                 user_pool_id=test_user_pool_id,
                 username="testuser",
-                password="TestPass123!",
+                password="TestPass123!",  # pragma: allowlist secret
                 email="test@example.com",
                 temp_password=True,
             )

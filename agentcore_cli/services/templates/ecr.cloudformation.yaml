@@ -1,9 +1,6 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: "CloudFormation template for AgentCore Platform ECR repository"
 
-Conditions:
-  ImageScanningEnabled: !Equals [!Ref ImageScanningEnabled, "true"]
-
 Parameters:
   RepositoryName:
     Type: String
@@ -18,14 +15,6 @@ Parameters:
       - staging
       - prod
 
-  ImageScanningEnabled:
-    Type: String
-    Description: Whether to enable image scanning on push
-    Default: "true"
-    AllowedValues:
-      - "true"
-      - "false"
-
   LifecyclePolicyDays:
     Type: Number
     Description: Number of days before untagged images are expired
@@ -38,11 +27,12 @@ Resources:
     Type: AWS::ECR::Repository
     Properties:
       RepositoryName: !Ref RepositoryName
+      EncryptionConfiguration:
+        EncryptionType: KMS
+        KmsKey: "alias/aws/ecr"
+      ImageTagMutability: IMMUTABLE
       ImageScanningConfiguration:
-        ScanOnPush: !If
-          - ImageScanningEnabled
-          - true
-          - false
+        ScanOnPush: true
       LifecyclePolicy:
         LifecyclePolicyText: !Sub |
           {

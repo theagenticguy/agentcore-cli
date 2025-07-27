@@ -240,8 +240,8 @@ scan = { sequence = [
 ], help = "run security scans" }
 
 # TESTING
-test = { cmd = "pytest --asyncio-mode=auto -q", help = "run tests" }
-cov = { cmd = "pytest --asyncio-mode=auto --cov=agentcore_cli --cov-report=term-missing --cov-report=xml:coverage.xml --cov-fail-under=85", help = "run tests w/ coverage + XML artifact" }
+test = { cmd = "pytest --asyncio-mode=auto", help = "run tests" }
+cov = { cmd = "pytest --asyncio-mode=auto --cov=agentcore_cli --cov-report=term-missing --cov-report=xml:coverage.xml --cov-fail-under=85 --tb=line", help = "run tests w/ coverage + XML artifact" }
 
 # DOCUMENTATION
 docs = { cmd = "mkdocs serve -a localhost:8080", help = "serve documentation" }
