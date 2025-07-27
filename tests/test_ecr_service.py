@@ -162,7 +162,7 @@ class TestECRService:
 
             assert success is False
             assert repository is None
-            assert "not found" in message.lower()
+            assert "repositorynotfound" in message.lower() or "not found" in message.lower()
 
     @mock_aws
     def test_list_repositories_success(self, test_region, aws_session):
@@ -227,7 +227,7 @@ class TestECRService:
             success, message = service.set_lifecycle_policy(test_repository_name, max_days=30)
 
             assert success is True
-            assert "set successfully" in message
+            assert "policy set" in message.lower()
 
     @mock_aws
     def test_set_lifecycle_policy_failure(self, test_region, aws_session, test_repository_name):

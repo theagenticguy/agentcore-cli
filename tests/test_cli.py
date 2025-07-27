@@ -213,14 +213,11 @@ class TestCLI:
 
     def test_cli_banner_ascii_art(self):
         """Test CLI ASCII banner."""
-        from agentcore_cli.utils.rich_utils import print_ascii_banner
+        from agentcore_cli.static.banner import banner_ascii
 
-        # This should not raise an exception
-        try:
-            print_ascii_banner()
-        except Exception:
-            # If it fails, that's okay for testing purposes
-            pass
+        # Check that banner_ascii is a string
+        assert isinstance(banner_ascii, str)
+        assert len(banner_ascii) > 0
 
     def test_cli_console_output(self):
         """Test CLI console output."""

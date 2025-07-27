@@ -20,13 +20,13 @@ def validate_aws_cli() -> bool:
 def validate_repo_name(repo_name: str) -> tuple[bool, str]:
     """Validate ECR repository name.
 
-    Repository names must match: [a-z0-9][a-z0-9._-]{0,254}
+    Repository names must match: `[a-z0-9][a-z0-9._-]{0,254}`
 
     Args:
         repo_name: Repository name to validate.
 
     Returns:
-        Tuple[bool, str]: Success status and error message if any.
+        uple[bool, str]: Success status and error message if any.
     """
     pattern: re.Pattern = re.compile(r"^[a-z0-9][a-z0-9._-]{0,254}$")
 

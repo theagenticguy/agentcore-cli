@@ -111,7 +111,7 @@ split-on-trailing-comma = false
 
 [tool.ruff.lint.per-file-ignores]
 "**/*.ipynb" = ["F704"]
-"tests/**/*.py" = ["D100", "D103"]
+"tests/**/*.py" = ["ARG001", "D100", "D103"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
@@ -245,6 +245,7 @@ cov = { cmd = "pytest --asyncio-mode=auto --cov=agentcore_cli --cov-report=term-
 
 # DOCUMENTATION
 docs = { cmd = "mkdocs serve -a localhost:8080", help = "serve documentation" }
-docs-build = { cmd = "mkdocs build", help = "build documentation" }
+docs-build = { cmd = "mkdocs build --strict", help = "build documentation" }
+docs-version-deploy = { cmd = "mike deploy --push --update-aliases latest", help = "deploy documentation" }
 docs-deploy = { cmd = "mkdocs gh-deploy", help = "deploy documentation" }
 docs-clean = { cmd = "rm -rf site", help = "clean documentation" }

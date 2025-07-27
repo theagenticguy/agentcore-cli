@@ -1,0 +1,38 @@
+name: Deploy Documentation to GitHub Pages
+on:
+  push:
+    branches:
+      - main
+      - master
+permissions:
+  contents: write
+jobs:
+  deploy:
+    name: Deploy Documentation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Using setup-uv which will also set up Python
+      - name: Set up Python and uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install
+
+      - name: Install the project
+        run: uv sync --all-groups --all-packages --all-extras
+
+      # First validate the build works without errors
+      - name: Validate documentation build
+        run: uv run mkdocs build --strict
+
+      # Deploy using mike for versioning support
+      - name: Deploy documentation
+        run: |
+          uv run poe docs-version-deploy

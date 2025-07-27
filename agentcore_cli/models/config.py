@@ -32,6 +32,7 @@ from .base import BaseAgentCoreModel
 from .resources import CognitoConfig
 from datetime import datetime
 from pydantic import ConfigDict, Field, model_validator
+from agentcore_cli.utils.validation import validate_repo_name
 
 
 class SyncConfig(BaseAgentCoreModel):
@@ -244,6 +245,15 @@ class AgentCoreConfig(BaseAgentCoreModel):
         Returns:
             ECRRepository instance or None if not found
         """
+        # Validate repository name
+        is_valid, error_msg = validate_repo_name(repository_name)
+        if not is_valid:
+            # Log warning but don't raise exception to maintain backward compatibility
+            from loguru import logger
+
+            logger.warning(f"Invalid repository name '{repository_name}': {error_msg}")
+            return None
+
         return self.global_resources.ecr_repositories.get(repository_name)
 
     def get_runtime_version_container_uri(

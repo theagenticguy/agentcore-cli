@@ -456,7 +456,6 @@ class AgentCoreService:
             payload: Payload to send to the agent runtime.
             content_type: Content type of the payload.
             accept: Accept header value.
-            streaming: Whether to use streaming response.
 
         Returns:
             Tuple[int, StreamingBody]: Status code and response object.

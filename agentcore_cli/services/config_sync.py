@@ -13,6 +13,7 @@ from deepdiff import DeepDiff
 
 from agentcore_cli.models.config import AgentCoreConfig
 from agentcore_cli.models.responses import CloudSyncResult, SyncStatus
+from agentcore_cli.utils.validation import validate_repo_name
 
 
 class ConfigSyncService:
@@ -101,6 +102,12 @@ class ConfigSyncService:
 
         # ECR repositories
         for repo_name, repo_data in global_data["ecr_repositories"].items():
+            # Validate repository name before serializing to cloud
+            is_valid, error_msg = validate_repo_name(repo_name)
+            if not is_valid:
+                logger.warning(f"Skipping invalid ECR repository name for cloud sync: '{repo_name}': {error_msg}")
+                continue
+
             for key, value in repo_data.items():
                 if key == "available_tags" and isinstance(value, list):
                     # Handle set serialization
@@ -291,6 +298,14 @@ class ConfigSyncService:
                     elif resource_type == "ecr" and len(parts) >= 4:
                         repo_name = parts[2]  # type: ignore[index]
                         key = parts[3]  # type: ignore[index]
+
+                        # Validate repository name from cloud storage
+                        is_valid, error_msg = validate_repo_name(repo_name)
+                        if not is_valid:
+                            logger.warning(
+                                f"Skipping invalid ECR repository name from cloud: '{repo_name}': {error_msg}"
+                            )
+                            continue
 
                         if repo_name not in config_data["global_resources"]["ecr_repositories"]:
                             config_data["global_resources"]["ecr_repositories"][repo_name] = {}

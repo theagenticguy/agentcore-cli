@@ -14,6 +14,7 @@ from agentcore_cli.models.config import AgentCoreConfig, EnvironmentConfig, Sync
 from agentcore_cli.models.resources import CognitoConfig, ECRRepository, IAMRoleConfig
 from agentcore_cli.models.runtime import AgentRuntime
 from agentcore_cli.models.responses import CloudSyncResult, SyncStatus
+from agentcore_cli.utils.validation import validate_repo_name
 
 
 class ConfigManager:

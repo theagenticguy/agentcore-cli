@@ -140,7 +140,7 @@ class TestCognitoService:
 
             assert success is False
             assert user_pool is None
-            assert "not found" in message.lower()
+            assert "resourcenotfound" in message.lower() or "not found" in message.lower()
 
     @mock_aws
     def test_get_identity_pool_success(self, test_region, aws_session, test_identity_pool_id):

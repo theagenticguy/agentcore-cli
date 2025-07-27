@@ -1,4 +1,5 @@
-site_name: agentcore-playground
+site_name: agentcore-cli
+site_url: https://theagenticguy.github.io/agentcore-cli/
 docs_dir: docs/mkdocs
 
 theme:
@@ -76,13 +77,13 @@ plugins:
   - mkdocstrings:
       handlers:
         python:
-          paths: [src]
+          paths: ["agentcore_cli"]
           options:
             docstring_style: google
             show_root_heading: true
             show_source: true
   - api-autonav:
-      modules: ["src"]
+      modules: ["agentcore_cli"]
   - llmstxt:
       sections:
         User Guide:

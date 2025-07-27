@@ -12,6 +12,7 @@ from typing import Any
 
 from agentcore_cli.models.resources import ECRRepository
 from agentcore_cli.utils.cfn_utils import CFNService
+from agentcore_cli.utils.validation import validate_repo_name
 
 
 class ECRService:
@@ -50,6 +51,11 @@ class ECRService:
             Tuple of (success, repository, message).
         """
         try:
+            # Validate repository name
+            is_valid, error_msg = validate_repo_name(repository_name)
+            if not is_valid:
+                return False, None, error_msg
+
             # Ensure environment has a valid value
             if environment is None:
                 environment = "dev"
@@ -144,6 +150,11 @@ class ECRService:
             Tuple of (success, message).
         """
         try:
+            # Validate repository name
+            is_valid, error_msg = validate_repo_name(repository_name)
+            if not is_valid:
+                return False, error_msg
+
             # Ensure environment has a valid value
             if environment is None:
                 environment = "dev"
@@ -207,6 +218,11 @@ class ECRService:
             Tuple of (success, repository, message).
         """
         try:
+            # Validate repository name
+            is_valid, error_msg = validate_repo_name(repository_name)
+            if not is_valid:
+                return False, None, error_msg
+
             # Get repository details
             response = self.ecr_client.describe_repositories(repositoryNames=[repository_name])
             repositories = response.get("repositories", [])
@@ -298,6 +314,11 @@ class ECRService:
             Tuple of (success, message).
         """
         try:
+            # Validate repository name
+            is_valid, error_msg = validate_repo_name(repository_name)
+            if not is_valid:
+                return False, error_msg
+
             # Define a lifecycle policy to expire untagged images after max_days
             policy_text = f"""{{
                 "rules": [
