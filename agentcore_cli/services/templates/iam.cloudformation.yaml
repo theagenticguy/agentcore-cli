@@ -1,0 +1,126 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "CloudFormation template for AgentCore Platform IAM roles"
+
+Parameters:
+  AgentName:
+    Type: String
+    Description: Name of the agent
+
+  Environment:
+    Type: String
+    Description: Environment name (e.g., dev, staging, prod)
+    Default: dev
+    AllowedValues:
+      - dev
+      - staging
+      - prod
+
+  RoleNamePrefix:
+    Type: String
+    Description: Prefix for the IAM role name
+    Default: agentcore
+
+Resources:
+  AgentExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${RoleNamePrefix}-${AgentName}-${Environment}"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: bedrock-agentcore.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - !Sub arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
+        - !Sub arn:aws:iam::aws:policy/CloudWatchLogsFullAccess
+      Path: /service-role/
+      Tags:
+        - Key: Name
+          Value: !Sub "${RoleNamePrefix}-${AgentName}-${Environment}"
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Agent
+          Value: !Ref AgentName
+        - Key: ManagedBy
+          Value: AgentCorePlatformCLI
+
+  # Policy to allow access to other common AWS services
+  AgentAccessPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub "${RoleNamePrefix}-${AgentName}-${Environment}-access"
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: ECRImageAccess
+            Effect: Allow
+            Action:
+              - ecr:BatchGetImage
+              - ecr:GetDownloadUrlForLayer
+            Resource:
+              - !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/*"
+          - Effect: Allow
+            Action:
+              - logs:DescribeLogStreams
+              - logs:CreateLogGroup
+            Resource:
+              - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/bedrock-agentcore/runtimes/*"
+          - Effect: Allow
+            Action:
+              - logs:DescribeLogGroups
+            Resource:
+              - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:*"
+          - Effect: Allow
+            Action:
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+            Resource:
+              - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/bedrock-agentcore/runtimes/*:log-stream:*"
+          - Sid: ECRTokenAccess
+            Effect: Allow
+            Action:
+              - ecr:GetAuthorizationToken
+            Resource: "*"
+          - Effect: Allow
+            Action:
+              - xray:PutTraceSegments
+              - xray:PutTelemetryRecords
+              - xray:GetSamplingRules
+              - xray:GetSamplingTargets
+            Resource: ["*"]
+          - Effect: Allow
+            Resource: "*"
+            Action: cloudwatch:PutMetricData
+            Condition:
+              StringEquals:
+                cloudwatch:namespace: "bedrock-agentcore"
+          - Sid: GetAgentAccessToken
+            Effect: Allow
+            Action:
+              - bedrock-agentcore:GetWorkloadAccessToken
+              - bedrock-agentcore:GetWorkloadAccessTokenForJWT
+              - bedrock-agentcore:GetWorkloadAccessTokenForUserId
+            Resource:
+              - !Sub "arn:aws:bedrock-agentcore:${AWS::Region}:${AWS::AccountId}:workload-identity-directory/default"
+              - !Sub "arn:aws:bedrock-agentcore:${AWS::Region}:${AWS::AccountId}:workload-identity-directory/default/workload-identity/${AgentName}-*"
+          - Sid: BedrockModelInvocation
+            Effect: Allow
+            Action:
+              - bedrock:InvokeModel
+              - bedrock:InvokeModelWithResponseStream
+            Resource:
+              - "arn:aws:bedrock:*::foundation-model/*"
+              - !Sub "arn:aws:bedrock:${AWS::Region}:${AWS::AccountId}:*"
+      Roles:
+        - !Ref AgentExecutionRole
+
+Outputs:
+  RoleName:
+    Description: "Name of the IAM role"
+    Value: !Ref AgentExecutionRole
+
+  RoleArn:
+    Description: "ARN of the IAM role"
+    Value: !GetAtt AgentExecutionRole.Arn

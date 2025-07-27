@@ -1,0 +1,250 @@
+[project]
+name = "agentcore-cli"
+version = "0.1.0"
+description = "Agents on Amazon Bedrock AgentCore"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "boto3>=1.39.14",
+    "click>=8.2.1",
+    "deepdiff>=8.5.0",
+    "loguru>=0.7.3",
+    "pydantic>=2.11.7",
+    "rich>=14.1.0",
+    "tabulate>=0.9.0",
+    "types-tabulate>=0.9.0.20241207",
+]
+
+[project.scripts]
+agentcore-cli = "agentcore_cli.cli:main"
+
+[dependency-groups]
+dev = [
+    "boto3-stubs[all]>=1.39.14",
+    "commitizen>=4.8.3",
+    "moto>=5.1.8",
+    "mypy>=1.17.0",
+    "poethepoet>=0.36.0",
+    "pre-commit>=4.2.0",
+    "pytest>=8.4.1",
+    "pytest-asyncio>=1.1.0",
+    "pytest-cov>=6.2.1",
+    "pytest-xdist>=3.8.0",
+    "ruff>=0.12.5",
+    "joserfc>=1.2.2",
+]
+docs = [
+    "mike>=2.1.3",
+    "mkdocs>=1.6.1",
+    "mkdocs-api-autonav>=0.3.0",
+    "mkdocs-llmstxt>=0.3.0",
+    "mkdocs-macros-plugin>=1.3.7",
+    "mkdocs-material>=9.6.15",
+    "mkdocstrings>=0.30.0",
+    "mkdocstrings-python>=1.16.12",
+    "pymdown-extensions>=10.16",
+]
+
+scan = ["bandit>=1.8.6", "pip-audit>=2.9.0"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["agentcore_cli"]
+
+[tool.ruff]
+line-length = 120
+extend-include = ["*.ipynb", "**/__init__.py", "agentcore_cli/**/*.py"]
+target-version = "py313"
+exclude = [
+    ".venv",
+    "venv",
+    "**/__pycache__",
+    "**/node_modules",
+    "**/.mypy_cache",
+    "**/.pytest_cache",
+    "**/.ruff_cache",
+    "**/.coverage",
+    "**/dist",
+    "**/build",
+    "**/env",
+    "**/.venv",
+    "**/.ipynb_checkpoints",
+]
+force-exclude = true
+
+[tool.ruff.lint]
+exclude = ["__init__.py", "**/__init__.py", "agentcore_cli/**/*.py"]
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # pyflakes
+    "I",      # isort
+    "B",      # flake8-bugbear
+    "C4",     # flake8-comprehensions
+    "UP",     # pyupgrade
+    "ARG001", # unused arguments in functions
+]
+ignore = [
+    "C901", # too complex
+    "E501", # line too long
+    "E741", # ambiguous variable name
+    "F402", # unused import
+    "F823", # missing type stubs
+    "D100", # missing docstring in public module
+    "D106", # missing docstring in public function
+]
+
+# Avoid trying to fix flake8-bugbear (`B`) violations.
+unfixable = ["B"]
+
+[tool.ruff.lint.isort]
+lines-after-imports = 2
+no-sections = true
+combine-as-imports = true
+split-on-trailing-comma = false
+
+[tool.ruff.lint.per-file-ignores]
+"**/*.ipynb" = ["F704"]
+"tests/**/*.py" = ["D100", "D103"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = true
+line-ending = "auto"
+docstring-code-format = true
+
+[tool.mypy]
+python_version = "3.11"
+plugins = ["pydantic.mypy"]
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+follow_untyped_imports = true
+ignore_missing_imports = false
+exclude = [
+    "venv",
+    ".venv",
+    ".*/__pycache__",
+    ".*/node_modules",
+    ".*/.mypy_cache",
+    ".*/.pytest_cache",
+    ".*/.ruff_cache",
+    ".*/.coverage",
+    ".*/dist",
+    "agentcore_cli/services/config_sync.py",
+    "agentcore_cli/models",
+]
+
+[tool.pyright]
+include = ["agentcore_cli"]
+exclude = [
+    "venv",
+    ".venv",
+    "**/__pycache__",
+    "**/node_modules",
+    "**/.mypy_cache",
+    "**/.pytest_cache",
+    "**/.ruff_cache",
+    "**/.coverage",
+    "**/dist",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+asyncio_mode = "auto"
+addopts = "--cov=agentcore_cli --cov-report=term-missing --cov-report=xml --cov-fail-under=85 -n auto"
+filterwarnings = [
+    "ignore:unclosed database in <sqlite3.Connection object at:ResourceWarning",
+]
+
+[tool.coverage.run]
+source = ["agentcore_cli"]
+
+[tool.coverage.report]
+skip_covered = true
+show_missing = true
+precision = 2
+exclude_lines = [
+    'def __repr__',
+    'pragma= no cover',
+    'raise NotImplementedError',
+    'if TYPE_CHECKING=',
+    'if typing.TYPE_CHECKING=',
+    '@overload',
+    '@typing.overload',
+    '\(Protocol\)=$',
+    'typing.assert_never',
+    'assert_never',
+    'if __name__ == .__main__.=',
+]
+
+[tool.coverage.paths]
+include = ["agentcore_cli/**/*.py"]
+
+[tool.bandit]
+exclude_dirs = ["venv", "tests"]
+
+[tool.commitizen]
+name = "cz_conventional_commits"
+version_provider = "uv"
+tag_format = "v$version"
+update_changelog_on_bump = true
+version_files = [
+    "agentcore_cli/__init__.py:__version__",
+    "pyproject.toml:version",
+]
+
+[tool.poe]
+executor.type = "uv"
+
+[tool.poe.tasks]
+
+# QUALITY
+format = "ruff format agentcore_cli tests"
+lint = "ruff check --fix agentcore_cli tests"
+typecheck = "mypy agentcore_cli"
+code-quality = { sequence = [
+    "format",
+    "lint",
+    "typecheck",
+], help = "run quality checks" }
+
+# SECURITY
+pip-audit = "pip-audit --skip-editable"
+bandit = "bandit -r agentcore_cli tests -c pyproject.toml -q"
+semgrep = "uvx semgrep@latest --config 'p/default' --error --skip-unknown-extensions"
+scan = { sequence = [
+    "pip-audit",
+    "bandit",
+    "semgrep",
+], help = "run security scans" }
+
+# TESTING
+test = { cmd = "pytest --asyncio-mode=auto -q", help = "run tests" }
+cov = { cmd = "pytest --asyncio-mode=auto --cov=agentcore_cli --cov-report=term-missing --cov-report=xml:coverage.xml --cov-fail-under=85", help = "run tests w/ coverage + XML artifact" }
+
+# DOCUMENTATION
+docs = { cmd = "mkdocs serve -a localhost:8080", help = "serve documentation" }
+docs-build = { cmd = "mkdocs build", help = "build documentation" }
+docs-deploy = { cmd = "mkdocs gh-deploy", help = "deploy documentation" }
+docs-clean = { cmd = "rm -rf site", help = "clean documentation" }

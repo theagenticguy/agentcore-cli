@@ -1,0 +1,179 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "CloudFormation template for AgentCore Platform Cognito resources"
+
+Parameters:
+  AgentName:
+    Type: String
+    Description: Name of the agent
+
+  Environment:
+    Type: String
+    Description: Environment name (e.g., dev, staging, prod)
+    Default: dev
+    AllowedValues:
+      - dev
+      - staging
+      - prod
+
+  ResourceNamePrefix:
+    Type: String
+    Description: Prefix for resource names
+    Default: agentcore
+
+  AllowSelfRegistration:
+    Type: String
+    Description: Whether to allow users to self-register
+    Default: "false"
+    AllowedValues:
+      - "true"
+      - "false"
+
+  EmailVerificationRequired:
+    Type: String
+    Description: Whether to require email verification
+    Default: "true"
+    AllowedValues:
+      - "true"
+      - "false"
+
+Resources:
+  # Cognito User Pool
+  UserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: !Sub "${ResourceNamePrefix}-${AgentName}-${Environment}"
+      AdminCreateUserConfig:
+        AllowAdminCreateUserOnly: !Equals [!Ref AllowSelfRegistration, "false"]
+      AutoVerifiedAttributes:
+        - email
+      EmailVerificationMessage: "Your verification code is {####}"
+      EmailVerificationSubject: !Sub "Your ${ResourceNamePrefix}-${AgentName}-${Environment} verification code"
+      Schema:
+        - Name: email
+          AttributeDataType: String
+          Mutable: true
+          Required: true
+      UsernameAttributes:
+        - email
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireSymbols: false
+          RequireUppercase: true
+      MfaConfiguration: "OFF"
+      AccountRecoverySetting:
+        RecoveryMechanisms:
+          - Name: verified_email
+            Priority: 1
+      EmailConfiguration:
+        EmailSendingAccount: COGNITO_DEFAULT
+      VerificationMessageTemplate:
+        DefaultEmailOption: CONFIRM_WITH_CODE
+      Tags:
+        - Key: Name
+          Value: !Sub "${ResourceNamePrefix}-${AgentName}-${Environment}"
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Agent
+          Value: !Ref AgentName
+        - Key: ManagedBy
+          Value: AgentCorePlatformCLI
+
+  # Cognito User Pool Client
+  UserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: !Sub "${ResourceNamePrefix}-${AgentName}-${Environment}-client"
+      UserPoolId: !Ref UserPool
+      GenerateSecret: false # pragma: allowlist secret
+      ExplicitAuthFlows:
+        - ALLOW_USER_PASSWORD_AUTH
+        - ALLOW_ADMIN_USER_PASSWORD_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+      PreventUserExistenceErrors: ENABLED
+      RefreshTokenValidity: 30
+      AccessTokenValidity: 1
+      IdTokenValidity: 1
+      TokenValidityUnits:
+        AccessToken: days
+        IdToken: days
+        RefreshToken: days
+
+  # Cognito Identity Pool
+  IdentityPool:
+    Type: AWS::Cognito::IdentityPool
+    Properties:
+      IdentityPoolName: !Sub "${ResourceNamePrefix}-${AgentName}-${Environment}-identity"
+      AllowUnauthenticatedIdentities: false
+      CognitoIdentityProviders:
+        - ClientId: !Ref UserPoolClient
+          ProviderName: !GetAtt UserPool.ProviderName
+          ServerSideTokenCheck: true
+      Tags:
+        Name: !Sub "${ResourceNamePrefix}-${AgentName}-${Environment}-identity"
+        Environment: !Ref Environment
+        Agent: !Ref AgentName
+        ManagedBy: AgentCorePlatformCLI
+
+  # IAM Role for Authenticated Users
+  AuthenticatedUserRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: cognito-identity.amazonaws.com
+            Action: sts:AssumeRoleWithWebIdentity
+            Condition:
+              StringEquals:
+                "cognito-identity.amazonaws.com:aud": !Ref IdentityPool
+              ForAnyValue:StringLike:
+                "cognito-identity.amazonaws.com:amr": authenticated
+      Policies:
+        - PolicyName: !Sub "${ResourceNamePrefix}-${AgentName}-${Environment}-auth-policy"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              # Allow invoking AgentCore runtimes
+              - Effect: Allow
+                Action:
+                  - bedrock-agentcore:InvokeAgentRuntime
+                Resource: !Sub "arn:aws:bedrock-agentcore:${AWS::Region}:${AWS::AccountId}:agent-runtime/${AgentName}*"
+      Tags:
+        - Key: Name
+          Value: !Sub "${ResourceNamePrefix}-${AgentName}-${Environment}-auth-role"
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Agent
+          Value: !Ref AgentName
+        - Key: ManagedBy
+          Value: AgentCorePlatformCLI
+
+  # Identity Pool Role Attachment
+  IdentityPoolRoleAttachment:
+    Type: AWS::Cognito::IdentityPoolRoleAttachment
+    Properties:
+      IdentityPoolId: !Ref IdentityPool
+      Roles:
+        authenticated: !GetAtt AuthenticatedUserRole.Arn
+
+Outputs:
+  UserPoolId:
+    Description: "ID of the Cognito User Pool"
+    Value: !Ref UserPool
+
+  UserPoolClientId:
+    Description: "ID of the Cognito User Pool Client"
+    Value: !Ref UserPoolClient
+
+  IdentityPoolId:
+    Description: "ID of the Cognito Identity Pool"
+    Value: !Ref IdentityPool
+
+  AuthenticatedUserRoleArn:
+    Description: "ARN of the Authenticated User Role"
+    Value: !GetAtt AuthenticatedUserRole.Arn

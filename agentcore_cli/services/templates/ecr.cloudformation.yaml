@@ -1,0 +1,84 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "CloudFormation template for AgentCore Platform ECR repository"
+
+Conditions:
+  ImageScanningEnabled: !Equals [!Ref ImageScanningEnabled, "true"]
+
+Parameters:
+  RepositoryName:
+    Type: String
+    Description: Name of the ECR repository
+
+  Environment:
+    Type: String
+    Description: Environment name (e.g., dev, staging, prod)
+    Default: dev
+    AllowedValues:
+      - dev
+      - staging
+      - prod
+
+  ImageScanningEnabled:
+    Type: String
+    Description: Whether to enable image scanning on push
+    Default: "true"
+    AllowedValues:
+      - "true"
+      - "false"
+
+  LifecyclePolicyDays:
+    Type: Number
+    Description: Number of days before untagged images are expired
+    Default: 30
+    MinValue: 1
+    MaxValue: 365
+
+Resources:
+  Repository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: !Ref RepositoryName
+      ImageScanningConfiguration:
+        ScanOnPush: !If
+          - ImageScanningEnabled
+          - true
+          - false
+      LifecyclePolicy:
+        LifecyclePolicyText: !Sub |
+          {
+            "rules": [
+              {
+                "rulePriority": 1,
+                "description": "Expire untagged images older than ${LifecyclePolicyDays} days",
+                "selection": {
+                  "tagStatus": "untagged",
+                  "countType": "sinceImagePushed",
+                  "countUnit": "days",
+                  "countNumber": ${LifecyclePolicyDays}
+                },
+                "action": {
+                  "type": "expire"
+                }
+              }
+            ]
+          }
+      Tags:
+        - Key: Name
+          Value: !Ref RepositoryName
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: ManagedBy
+          Value: AgentCorePlatformCLI
+
+Outputs:
+  RepositoryUri:
+    Description: "URI of the ECR repository"
+    Value: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${RepositoryName}
+
+  RepositoryArn:
+    Description: "ARN of the ECR repository"
+    Value: !GetAtt Repository.Arn
+
+  RepositoryName:
+    Description: "Name of the ECR repository"
+    Value: !Ref RepositoryName

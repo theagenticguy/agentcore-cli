@@ -1,0 +1,4 @@
+---
+description: the project uses uv. in general, you should use `uv run` to prefix your commands
+alwaysApply: false
+---
