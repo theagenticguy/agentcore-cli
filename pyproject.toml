@@ -247,5 +247,5 @@ cov = { cmd = "pytest --asyncio-mode=auto --cov=agentcore_cli --cov-report=term-
 docs = { cmd = "mkdocs serve -a localhost:8080", help = "serve documentation" }
 docs-build = { cmd = "mkdocs build --strict", help = "build documentation" }
 docs-version-deploy = { cmd = "mike deploy --push --update-aliases latest", help = "deploy documentation" }
-docs-deploy = { cmd = "mkdocs gh-deploy", help = "deploy documentation" }
+docs-deploy = { cmd = "mkdocs gh-deploy --force", help = "deploy documentation" }
 docs-clean = { cmd = "rm -rf site", help = "clean documentation" }
