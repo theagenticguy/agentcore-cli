@@ -54,8 +54,8 @@ jobs:
         run: |
           if [[ $IS_RELEASE == "true" ]]; then
             # For tagged releases, deploy as version and update 'latest' alias
-            uv run mike deploy --push --update-aliases $VERSION latest
+            uv run mike deploy --push --update-aliases $VERSION latest --allow-empty
           else
             # For main branch, deploy as 'dev'
-            uv run mike deploy --push dev
+            uv run mike deploy --push dev --allow-empty
           fi
