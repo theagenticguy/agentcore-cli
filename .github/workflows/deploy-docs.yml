@@ -16,6 +16,11 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Configure Git Credentials
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+
       # Using setup-uv which will also set up Python
       - name: Set up Python and uv
         uses: astral-sh/setup-uv@v6
