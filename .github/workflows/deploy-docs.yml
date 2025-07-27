@@ -4,6 +4,8 @@ on:
     branches:
       - main
       - master
+    tags:
+      - "v*"
 permissions:
   contents: write
 jobs:
@@ -21,7 +23,6 @@ jobs:
           git config user.name "AgentCore CLI Bot"
           git config user.email "agentcore-cli-bot@users.noreply.github.com"
 
-      # Using setup-uv which will also set up Python
       - name: Set up Python and uv
         uses: astral-sh/setup-uv@v6
         with:
@@ -33,14 +34,28 @@ jobs:
       - name: Install the project
         run: uv sync --all-groups --all-packages --all-extras
 
-      # First validate the build works without errors
       - name: Validate documentation build
         run: uv run mkdocs build --strict
 
-      - name: Set release version
-        run: echo "GIT_TAG=${{ github.event.release.tag_name }}" >> $GITHUB_ENV
+      # Get the current git tag or use 'main' for non-tag pushes
+      - name: Set version for deployment
+        run: |
+          if [[ $GITHUB_REF == refs/tags/* ]]; then
+            VERSION=${GITHUB_REF#refs/tags/}
+            echo "VERSION=$VERSION" >> $GITHUB_ENV
+            echo "IS_RELEASE=true" >> $GITHUB_ENV
+          else
+            echo "VERSION=main" >> $GITHUB_ENV
+            echo "IS_RELEASE=false" >> $GITHUB_ENV
+          fi
 
       # Deploy using mike for versioning support
       - name: Deploy documentation
         run: |
-          uv run mike deploy --push --update-aliases ${GIT_TAG} latest
+          if [[ $IS_RELEASE == "true" ]]; then
+            # For tagged releases, deploy as version and update 'latest' alias
+            uv run mike deploy --push --update-aliases $VERSION latest
+          else
+            # For main branch, deploy as 'dev'
+            uv run mike deploy --push dev
+          fi
